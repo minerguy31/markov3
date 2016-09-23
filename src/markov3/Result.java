@@ -10,21 +10,23 @@ import java.util.function.BiFunction;
 public class Result {
 	private HashMap<String, Integer> results = new HashMap<>();
 	private int totaloccur = 0;
-
+	
+	public Result(String res) {
+		results.put(res, 1);
+	}
+	
 	public int getOccur() {
 		return totaloccur;
 	}
 
 	public Result addResult(String res) {
-		results.computeIfPresent(res, new BiFunction<String, Integer, Integer>() {
+		results.compute(res, new BiFunction<String, Integer, Integer>() {
 
 			@Override
 			public Integer apply(String arg0, Integer arg1) {
-				return arg1 + 1;
+				return arg1 != null ? arg1 + 1 : 1;
 			}}
-				);
-
-		results.putIfAbsent(res, 1);
+		);
 		totaloccur++;
 		return this;
 	}

@@ -44,15 +44,13 @@ public class Dataset {
 	
 	public void addPair(String p, String result) {
 		totaloccur++;
-		pairset.computeIfPresent(p, new BiFunction<String, Result, Result>() {
+		pairset.compute(p, new BiFunction<String, Result, Result>() {
 
 			@Override
 			public Result apply(String t, Result u) {
-				return u.addResult(result);
+				return u != null ? u.addResult(result) : new Result(result);
 			}}
 		);
-		
-		pairset.putIfAbsent(p, new Result().addResult(result));
 	}
 	
 	public void addData(Scanner sc) {
