@@ -15,7 +15,13 @@ public class Dataset {
 
 	public static transient final int DEFAULT_LOOKAHEAD = 5;
 	
+	private boolean debug = false;
+	
 	public long totaloccur = 0;
+	
+	public void setDebugging(boolean b) {
+		debug = b;
+	}
 	
 	public Dataset() {
 		this(DEFAULT_LOOKAHEAD);
@@ -50,9 +56,18 @@ public class Dataset {
 	}
 	
 	public void addData(Scanner sc) {
+		long before = System.currentTimeMillis();
+		long init = System.currentTimeMillis();
 		while(sc.hasNext()) {
 			String line = sc.nextLine();
 			addSentence(line);
+			if(debug && System.currentTimeMillis() - before > 1000) {
+				// iters = 0;
+				System.out.println("Pairings: " + pairset.size() + " - delta " + 
+				((double)pairset.size()) * 1000d / (double)(System.currentTimeMillis() - init));
+				before = System.currentTimeMillis();
+				// prct = pairset.size();
+			}
 		}
 	}
 	
@@ -66,7 +81,7 @@ public class Dataset {
 	}
 
 	public void addStarter(String p) {
-		starters.compute(p, new BiFunction<String, Integer, Integer>() {
+		starters.computeIfPresent(p, new BiFunction<String, Integer, Integer>() {
 
 			@Override
 			public Integer apply(String arg0, Integer arg1) {
@@ -98,6 +113,7 @@ public class Dataset {
 			if(ret.length() > lookahead * 2)
 				break;
 			
+			// System.out.println(iters);
 		} while(ret.length() > lookahead + 1 && iters < 10);
 		return ret.toString();
 	}

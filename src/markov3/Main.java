@@ -9,12 +9,27 @@ import java.util.Scanner;
 
 public class Main {
 	public static void main(String[] args) throws Exception {
+		
 		Random rnd = new Random();
 		
+		long l = System.currentTimeMillis();
+		
+		Dataset d = new Dataset();
+		d.addData(new Scanner(new File("../output.txt")));
+		System.out.println("Read data in " + (System.currentTimeMillis() - l) + " ms");
+		l = System.currentTimeMillis();
+		for(int i = 0;i < 50; i++) {
+			System.out.println(d.getSentence(rnd));
+		}
+		
+		System.out.println("Generated 50 responses in " + (System.currentTimeMillis() - l) + " ms\n"
+				+ "Average: " + (System.currentTimeMillis() - l) / 50);
+		
+		/*/
 		PrintWriter pw = new PrintWriter(new FileOutputStream("result.txt"));
-		for(int lookahead = 10; lookahead < 16; lookahead++) {
+		for(int lookahead = 10; lookahead < 11; lookahead++) {
 			Dataset d = new Dataset(lookahead);
-			d.addData(new Scanner(new File("../garmy_data.txt")));
+			d.addData(new Scanner(new File("../output.txt")));
 			pw.println("## LOOKAHEAD = "+lookahead);
 			System.out.println("st "+lookahead);
 			for(int i = 0; i < 64; i++)
@@ -25,5 +40,6 @@ public class Main {
 		
 		pw.flush();
 		pw.close();
+		//*/
 	}
 }
