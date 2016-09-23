@@ -15,7 +15,7 @@ public class Main {
 		long l = System.currentTimeMillis();
 		
 		Dataset d = new Dataset();
-		d.addData(new Scanner(new File("../output.txt")));
+		d.addData(new File("../output.txt"));
 		System.out.println("Read data in " + (System.currentTimeMillis() - l) + " ms");
 		l = System.currentTimeMillis();
 		for(int i = 0;i < 50; i++) {

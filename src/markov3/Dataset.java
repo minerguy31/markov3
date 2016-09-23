@@ -1,6 +1,10 @@
 package markov3;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,10 +12,12 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class Dataset {
 	public HashMap<String, Result> pairset = new HashMap<>(3000000);
-	public HashMap<String, Integer> starters = new HashMap<>(30000);
+	public HashMap<String, MutableInteger> starters = new HashMap<>(30000);
 
 	public static transient final int DEFAULT_LOOKAHEAD = 5;
 	
@@ -31,12 +37,12 @@ public class Dataset {
 		this.lookahead = lookahead;
 	}
 	
-	public Dataset(FileInputStream fis, int i) {
+	public Dataset(File fis, int i) {
 		this(i);
-		addData(new Scanner(fis));
+		addData(fis);
 	}
 	
-	public Dataset(FileInputStream fis) {
+	public Dataset(File fis) {
 		this(fis, DEFAULT_LOOKAHEAD);
 	}
 	
@@ -53,20 +59,16 @@ public class Dataset {
 		);
 	}
 	
-	public void addData(Scanner sc) {
-		long before = System.currentTimeMillis();
-		long init = System.currentTimeMillis();
-		while(sc.hasNext()) {
-			String line = sc.nextLine();
-			addSentence(line);
-			if(debug && System.currentTimeMillis() - before > 1000) {
-				// iters = 0;
-				System.out.println("Pairings: " + pairset.size() + " - delta " + 
-				((double)pairset.size()) * 1000d / (double)(System.currentTimeMillis() - init));
-				before = System.currentTimeMillis();
-				// prct = pairset.size();
-			}
-		}
+	public void addData(BufferedReader sc) {
+		Stream<String> lines = sc.lines().parallel();
+		lines.forEach(new Consumer<String>(){
+
+			@Override
+			public void accept(String arg0) {
+				addSentence(arg0);
+				
+			}}
+		);
 	}
 	
 	public void addSentence(String sentence) {
@@ -79,14 +81,9 @@ public class Dataset {
 	}
 
 	public void addStarter(String p) {
-		starters.computeIfPresent(p, new BiFunction<String, Integer, Integer>() {
-
-			@Override
-			public Integer apply(String arg0, Integer arg1) {
-				return arg1 + 1;
-			}}
-		);
-		starters.putIfAbsent(p, 1);
+		MutableInteger mi = starters.get(p);
+		if(mi == null)
+			starters.put(p, new MutableInteger(1));
 	}
 	
 	public String getSentence(Random rnd) {
@@ -148,5 +145,13 @@ public class Dataset {
 		index = (index >= 0) ? index : -index-1;
 
 		return vals.get(index);
+	}
+
+	public void addData(File file) {
+		try {
+			addData(new BufferedReader(new FileReader(file)));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }

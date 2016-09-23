@@ -5,14 +5,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.function.BiFunction;
 
 public class Result {
-	private HashMap<String, Integer> results = new HashMap<>();
+	private HashMap<String, MutableInteger> results = new HashMap<>();
 	private int totaloccur = 0;
 	
 	public Result(String res) {
-		results.put(res, 1);
+		results.put(res, new MutableInteger(1));
 	}
 	
 	public int getOccur() {
@@ -20,13 +19,12 @@ public class Result {
 	}
 
 	public Result addResult(String res) {
-		results.compute(res, new BiFunction<String, Integer, Integer>() {
 
-			@Override
-			public Integer apply(String arg0, Integer arg1) {
-				return arg1 != null ? arg1 + 1 : 1;
-			}}
-		);
+		MutableInteger i = results.get(res);
+		if(i == null)
+			results.put(res, new MutableInteger(1));
+		else
+			i.increment();
 		totaloccur++;
 		return this;
 	}
@@ -37,15 +35,15 @@ public class Result {
 	}
 
 	public String getRandom(Random rnd) {
-		ArrayList<Entry<String, Integer>> entries = new ArrayList<>(results.entrySet());
+		ArrayList<Entry<String, MutableInteger>> entries = new ArrayList<>(results.entrySet());
 
 		ArrayList<Long> ints = new ArrayList<>();
 		ArrayList<String> vals = new ArrayList<>();
 
 		long cumulative = -1;
 
-		for(Entry<String, Integer> e : entries) {
-			ints.add(cumulative += e.getValue());
+		for(Entry<String, MutableInteger> e : entries) {
+			ints.add(cumulative += e.getValue().get());
 			vals.add(e.getKey());
 		}
 
