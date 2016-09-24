@@ -113,9 +113,27 @@ public class Dataset {
 		if(sentence.length() < lookahead)
 			return;
 		addStarter(sentence.substring(0, lookahead));
-		for(int i = 0; i < sentence.length() - lookahead; i++) {
-			addPair(sentence.substring(i, i + lookahead), String.valueOf(sentence.charAt(i + lookahead)));
+		
+		String[] grams = ngrams(sentence, lookahead);
+		for(int i = 0; i < grams.length; i++) {
+			addPair(grams[i], String.valueOf(sentence.charAt(i + lookahead)));
 		}
+	}
+	
+	/**
+	 * Returns all but the last ngram in a given string
+	 * @param str String to ngram-ify
+	 * @param length Length of ngrams
+	 * @return The array of ngrams
+	 */
+	private static String[] ngrams(String str, int length) {
+	    char[] chars = str.toCharArray();
+	    final int resultCount = chars.length - length;
+	    String[] result = new String[resultCount];
+	    for (int i = 0; i < resultCount; i++) {
+	        result[i] = new String(chars, i, length);
+	    }
+	    return result;
 	}
 	
 	/**
