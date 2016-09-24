@@ -128,15 +128,15 @@ public class Dataset {
 	}
 	
 	public String getRandomStarter(Random rnd) {
-		ArrayList<Entry<String, Integer>> entries = new ArrayList<>(starters.entrySet());
+		ArrayList<Entry<String, MutableInteger>> entries = new ArrayList<>(starters.entrySet());
 
 		ArrayList<Long> ints = new ArrayList<>();
 		ArrayList<String> vals = new ArrayList<>();
 
 		long cumulative = -1;
 
-		for(Entry<String, Integer> e : entries) {
-			ints.add(cumulative += e.getValue());
+		for(Entry<String, MutableInteger> e : entries) {
+			ints.add(cumulative += e.getValue().get());
 			vals.add(e.getKey());
 		}
 
