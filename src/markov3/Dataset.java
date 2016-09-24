@@ -1,5 +1,8 @@
 package markov3;
 
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,12 +19,14 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class Dataset {
+	// The ids
+	public StringIDRegister ids = new StringIDRegister();
 	
 	// The pairings
-	public HashMap<String, Result> pairset = new HashMap<>(3000000);
+	public TIntObjectHashMap<Result> pairset = new TIntObjectHashMap<>(3000000);
 	
 	// The sentence starters
-	public HashMap<String, MutableInteger> starters = new HashMap<>(30000);
+	public TIntObjectHashMap<MutableInteger> starters = new TIntObjectHashMap<>(30000);
 
 	public static transient final int DEFAULT_LOOKAHEAD = 5;
 	
@@ -78,15 +83,15 @@ public class Dataset {
 	 * @param p The phrase before
 	 * @param result The phrase that it results in
 	 */
-	public void addPair(String p, String result) {
+	public void addPair(int p, String result) {
 		totaloccur++;
-		pairset.compute(p, new BiFunction<String, Result, Result>() {
-
-			@Override
-			public Result apply(String t, Result u) {
-				return u != null ? u.addResult(result) : new Result(result);
-			}}
-		);
+		
+		Result r = pairset.get(p);
+		
+		if(r == null)
+			pairset.put(p, new Result(result));
+		else
+			r.addResult(result);
 	}
 	
 	/**
@@ -112,9 +117,9 @@ public class Dataset {
 	public void addSentence(String sentence) {
 		if(sentence.length() < lookahead)
 			return;
-		addStarter(sentence.substring(0, lookahead));
+		addStarter(ids.register(sentence.substring(0, lookahead)));
 		for(int i = 0; i < sentence.length() - lookahead; i++) {
-			addPair(sentence.substring(i, i + lookahead), "" + sentence.charAt(i + lookahead));
+			addPair(ids.register(sentence.substring(i, i + lookahead)), "" + sentence.charAt(i + lookahead));
 		}
 	}
 	
@@ -122,7 +127,7 @@ public class Dataset {
 	 * Adds a starter, which is something that  was used to begin a sentence (pretty straightforward)
 	 * @param p
 	 */
-	public void addStarter(String p) {
+	public void addStarter(int p) {
 		MutableInteger mi = starters.get(p);
 		if(mi == null)
 			starters.put(p, new MutableInteger(1));
@@ -143,9 +148,9 @@ public class Dataset {
 			ret = new StringBuilder(s);
 			String next;
 			while(true) {
-				if(!pairset.containsKey(s.toString()))
+				if(!pairset.containsKey(ids.register(s.toString())))
 					break;
-				next = getRandom(s.toString(), rnd);
+				next = getRandom(ids.register(s.toString()), rnd);
 				ret.append(next);
 				s.deleteCharAt(0);
 				s.append(next);
@@ -168,7 +173,7 @@ public class Dataset {
 	 * @param rnd Instance of Random to use
 	 * @return The next bit of the chain
 	 */
-	public String getRandom(String starter, Random rnd) {
+	public String getRandom(int starter, Random rnd) {
 		// TODO: Null check
 		return pairset.get(starter)
 				.getRandom(rnd);
@@ -183,29 +188,38 @@ public class Dataset {
 				+ " Number of starters (unique): " + starters.size() + "\n";
 	}
 	
+	
+	private transient long cumulative = -1;
 	/**
 	 * Get a random starter
 	 * @param rnd Instance of Random to use
 	 * @return the starter
 	 */
-	public String getRandomStarter(Random rnd) {
+	public int getRandomStarter(Random rnd) {
 		// TODO: OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE
-		ArrayList<Entry<String, MutableInteger>> entries = new ArrayList<>(starters.entrySet());
 
 		ArrayList<Long> ints = new ArrayList<>();
-		ArrayList<String> vals = new ArrayList<>();
+		ArrayList<Integer> vals = new ArrayList<>();
 
-		long cumulative = -1;
+		
+		starters.forEachEntry(new TIntObjectProcedure<MutableInteger> () {
 
-		for(Entry<String, MutableInteger> e : entries) {
-			ints.add(cumulative += e.getValue().get());
-			vals.add(e.getKey());
-		}
+			@Override
+			public boolean execute(int arg0, MutableInteger e) {
+
+				ints.add(cumulative += e.get());
+				vals.add(arg0);
+				
+				return true;
+			}
+			
+		});
 
 		long l = Math.abs(rnd.nextLong()) % (cumulative == 0 ? 1 : cumulative);
 		int index = Collections.binarySearch(ints, l);
 		index = (index >= 0) ? index : -index-1;
 
+		cumulative = -1;
 		return vals.get(index);
 	}
 
