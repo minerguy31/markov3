@@ -1,5 +1,7 @@
 package markov3;
 
+import gnu.trove.map.hash.TIntIntHashMap;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 public class Result {
-	private HashMap<String, MutableInteger> results = new HashMap<>();
+	private TIntIntHashMap results = new TIntIntHashMap();
 	
 	/**
 	 * The number of times this result occurs. Mostly just shorthand for getting random.
@@ -25,8 +27,8 @@ public class Result {
 	 * marginally faster.
 	 * @param res
 	 */
-	public Result(String res) {
-		results.put(res, new MutableInteger(1));
+	public Result(int res) {
+		results.put(res, 1);
 	}
 	
 	/**
@@ -42,13 +44,12 @@ public class Result {
 	 * @param res Result to add
 	 * @return
 	 */
-	public Result addResult(String res) {
+	public Result addResult(int res) {
 
-		MutableInteger i = results.get(res);
-		if(i == null)
-			results.put(res, new MutableInteger(1));
+		if(results.contains(res))
+			results.put(res, 1);
 		else
-			i.increment();
+			results.adjustValue(res, 1);
 		totaloccur++;
 		return this;
 	}
