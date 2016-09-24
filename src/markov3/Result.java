@@ -8,16 +8,40 @@ import java.util.Random;
 
 public class Result {
 	private HashMap<String, MutableInteger> results = new HashMap<>();
+	
+	/**
+	 * The number of times this result occurs. Mostly just shorthand for getting random.
+	 */
 	private int totaloccur = 0;
 	
+	/**
+	 * Default constructor
+	 */
+	public Result() {}
+	
+	/**
+	 * Make new result and then add a string to results. Identical as making an
+	 * empty Result and then calling addResult. It just saves time and is 
+	 * marginally faster.
+	 * @param res
+	 */
 	public Result(String res) {
 		results.put(res, new MutableInteger(1));
 	}
 	
+	/**
+	 * Get the number of times these results have occured
+	 * @return
+	 */
 	public int getOccur() {
 		return totaloccur;
 	}
 
+	/**
+	 * Add a result to the map
+	 * @param res Result to add
+	 * @return
+	 */
 	public Result addResult(String res) {
 
 		MutableInteger i = results.get(res);
@@ -34,7 +58,13 @@ public class Result {
 		return results.toString();
 	}
 
+	/**
+	 * Get random result string
+	 * @param rnd instance of Random to use
+	 * @return a result string, randomly selected using rnd
+	 */
 	public String getRandom(Random rnd) {
+		// TODO: OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE
 		ArrayList<Entry<String, MutableInteger>> entries = new ArrayList<>(results.entrySet());
 
 		ArrayList<Long> ints = new ArrayList<>();

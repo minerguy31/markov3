@@ -16,7 +16,11 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class Dataset {
+	
+	// The pairings
 	public HashMap<String, Result> pairset = new HashMap<>(3000000);
+	
+	// The sentence starters
 	public HashMap<String, MutableInteger> starters = new HashMap<>(30000);
 
 	public static transient final int DEFAULT_LOOKAHEAD = 5;
@@ -29,25 +33,51 @@ public class Dataset {
 		debug = b;
 	}
 	
+	/**
+	 * Makes dataset with the default lookahead
+	 */
 	public Dataset() {
 		this(DEFAULT_LOOKAHEAD);
 	}
 	
+	
+	/**
+	 * Makes dataset with specified lookahead
+	 */
 	public Dataset(int lookahead) {
 		this.lookahead = lookahead;
 	}
 	
+	/**
+	 * Makes dataset from file
+	 * @param fis File to read from
+	 * @param i Lookahead
+	 */
 	public Dataset(File fis, int i) {
 		this(i);
 		addData(fis);
 	}
 	
+	/**
+	 * Makes dataset from file
+	 * @param fis File to read from
+	 */
 	public Dataset(File fis) {
 		this(fis, DEFAULT_LOOKAHEAD);
 	}
 	
-	public int lookahead = 5;
+	/**
+	 * Lookahead
+	 */
+	public int lookahead = DEFAULT_LOOKAHEAD;
 	
+	/**
+	 * Add a pairing
+	 * 
+	 * For example, with a lookahead of 4, "hello" is properly parameterized as "hell" and "o"
+	 * @param p The phrase before
+	 * @param result The phrase that it results in
+	 */
 	public void addPair(String p, String result) {
 		totaloccur++;
 		pairset.compute(p, new BiFunction<String, Result, Result>() {
@@ -59,6 +89,10 @@ public class Dataset {
 		);
 	}
 	
+	/**
+	 * Does what it says on the tin, adds data from a BufferedReader
+	 * @param sc
+	 */
 	public void addData(BufferedReader sc) {
 		Stream<String> lines = sc.lines().parallel();
 		lines.forEach(new Consumer<String>(){
@@ -71,6 +105,10 @@ public class Dataset {
 		);
 	}
 	
+	/**
+	 * Breaks a sentence into N-grams (based on lookahead) and uses addPair correspondingly
+	 * @param sentence The sentence to be parsed
+	 */
 	public void addSentence(String sentence) {
 		if(sentence.length() < lookahead)
 			return;
@@ -79,13 +117,24 @@ public class Dataset {
 			addPair(sentence.substring(i, i + lookahead), "" + sentence.charAt(i + lookahead));
 		}
 	}
-
+	
+	/**
+	 * Adds a starter, which is something that  was used to begin a sentence (pretty straightforward)
+	 * @param p
+	 */
 	public void addStarter(String p) {
 		MutableInteger mi = starters.get(p);
 		if(mi == null)
 			starters.put(p, new MutableInteger(1));
+		else
+			mi.increment();
 	}
 	
+	/**
+	 * Get a random sentence
+	 * @param rnd Instance of Random to use
+	 * @return the generated sentence
+	 */
 	public String getSentence(Random rnd) {
 		StringBuilder ret;
 		int iters = 0;
@@ -113,7 +162,14 @@ public class Dataset {
 		return ret.toString();
 	}
 	
+	/** 
+	 * Get a random pairing
+	 * @param starter The starter to use
+	 * @param rnd Instance of Random to use
+	 * @return The next bit of the chain
+	 */
 	public String getRandom(String starter, Random rnd) {
+		// TODO: Null check
 		return pairset.get(starter)
 				.getRandom(rnd);
 	}
@@ -127,7 +183,13 @@ public class Dataset {
 				+ " Number of starters (unique): " + starters.size() + "\n";
 	}
 	
+	/**
+	 * Get a random starter
+	 * @param rnd Instance of Random to use
+	 * @return the starter
+	 */
 	public String getRandomStarter(Random rnd) {
+		// TODO: OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE OPTIMIZE
 		ArrayList<Entry<String, MutableInteger>> entries = new ArrayList<>(starters.entrySet());
 
 		ArrayList<Long> ints = new ArrayList<>();
@@ -147,6 +209,11 @@ public class Dataset {
 		return vals.get(index);
 	}
 
+	
+	/**
+	 * Add data from file
+	 * @param file ditto
+	 */
 	public void addData(File file) {
 		try {
 			addData(new BufferedReader(new FileReader(file)));
