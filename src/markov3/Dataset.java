@@ -114,7 +114,7 @@ public class Dataset {
 			return;
 		addStarter(sentence.substring(0, lookahead));
 		for(int i = 0; i < sentence.length() - lookahead; i++) {
-			addPair(sentence.substring(i, i + lookahead), "" + sentence.charAt(i + lookahead));
+			addPair(sentence.substring(i, i + lookahead), String.valueOf(sentence.charAt(i + lookahead)));
 		}
 	}
 	
