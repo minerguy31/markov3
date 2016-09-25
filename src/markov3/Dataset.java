@@ -1,5 +1,6 @@
 package markov3;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -100,21 +101,28 @@ public class Dataset {
 	 * @param sc
 	 */
 	int linecount = 0;
-	public void addData(BufferedReader sc) {
-		Stream<String> lines = sc.lines().parallel();
+	public void addData(BufferedInputStream sc) {
+		byte[] buffer = new byte[1 << 20];
 		
-		
-		
-		lines.forEach(new Consumer<String>(){
-
-			@Override
-			public void accept(String arg0) {
-				addSentence(arg0 + END_OF_MSG);
-				//linecount++;
-				//if(linecount % 10000 == 0)
-				//	System.out.println("Percentage done: " + ((double)linecount) * 100d / 965321d);
-			}}
-		);
+		try {
+			int init = sc.available();
+			
+			while(sc.available() > 0) {
+				sc.read(buffer);
+				int prevloc = 0;
+				for(int i = 0; i < buffer.length; i++) {
+					
+					if(buffer[i] == '\n') {
+						addSentence(new String(buffer, prevloc, i - prevloc));
+						prevloc = i + 1;
+					} else if(buffer[i] == 0) break;
+				}
+				
+				System.out.println("To parse %: " + (double)sc.available() * 100d / (double)init);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -296,7 +304,7 @@ public class Dataset {
 	 */
 	public void addData(File file) {
 		try {
-			addData(new BufferedReader(new FileReader(file)));
+			addData(new BufferedInputStream(new FileInputStream(file)));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
