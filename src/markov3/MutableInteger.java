@@ -37,4 +37,9 @@ public class MutableInteger {
 	public void increment() {
 		val++;
 	}
+	
+	@Override
+	public String toString() {
+		return Integer.toString(val);
+	}
 }

@@ -1,10 +1,12 @@
 package markov3;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.stream.Stream;
 
 public class Result {
 	private HashMap<String, MutableInteger> results = new HashMap<>();
@@ -58,6 +60,43 @@ public class Result {
 		return results.toString();
 	}
 
+	/**
+	 * Serialize this Result to a String
+	 * @return
+	 */
+	
+	public String serialize() {
+		StringBuilder sb = new StringBuilder(String.valueOf(totaloccur));
+		
+		for(Entry<String, MutableInteger> e : results.entrySet()) {
+			sb.append(Dataset.SEP_PAIRING);
+			sb.append(e.getKey());
+			sb.append(Dataset.SEP_PAIRING);
+			sb.append(e.getValue());
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * Get a Result from a serialized String
+	 * @param s
+	 * @return
+	 */
+	public static Result unserialize(String s) {
+		Result ret = new Result();
+		
+		String[] parts = s.split(Dataset.SEP_PAIRING);
+		
+		ret.totaloccur = Integer.parseInt(parts[0]);
+		
+		for(int i = 1; i < parts.length - 1; i += 2) {
+			ret.results.put(parts[i], new MutableInteger(Integer.parseInt(parts[i + 1])));
+		}
+		
+		return ret;
+	}
+	
 	/**
 	 * Get random result string
 	 * @param rnd instance of Random to use

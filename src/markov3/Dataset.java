@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,7 +24,12 @@ public class Dataset {
 	// The sentence starters
 	public HashMap<String, MutableInteger> starters = new HashMap<>(30000);
 
+	
 	public static transient final int DEFAULT_LOOKAHEAD = 5;
+	public static transient final String SEP_DATASET = "\3";
+	public static transient final String SEP_PAIRING = "\4";
+	public static transient final String SEP_STARTERS = "\5";
+	public static transient final String END_OF_MSG = "\2";
 	
 	private boolean debug = false;
 	
@@ -93,14 +99,20 @@ public class Dataset {
 	 * Does what it says on the tin, adds data from a BufferedReader
 	 * @param sc
 	 */
+	int linecount = 0;
 	public void addData(BufferedReader sc) {
 		Stream<String> lines = sc.lines().parallel();
+		
+		
+		
 		lines.forEach(new Consumer<String>(){
 
 			@Override
 			public void accept(String arg0) {
-				addSentence(arg0);
-				
+				addSentence(arg0 + END_OF_MSG);
+				//linecount++;
+				//if(linecount % 10000 == 0)
+				//	System.out.println("Percentage done: " + ((double)linecount) * 100d / 965321d);
 			}}
 		);
 	}
@@ -167,7 +179,7 @@ public class Dataset {
 				ret.append(next);
 				s.deleteCharAt(0);
 				s.append(next);
-				if(next.endsWith("."))
+				if(next.endsWith(END_OF_MSG))
 					break;
 			}
 			iters++;
@@ -177,7 +189,7 @@ public class Dataset {
 			
 			// System.out.println(iters);
 		} while(ret.length() > lookahead + 1 && iters < 10);
-		return ret.toString();
+		return ret.toString().replace("\\n", "\n");
 	}
 	
 	/** 
@@ -226,7 +238,57 @@ public class Dataset {
 
 		return vals.get(index);
 	}
-
+	
+	public String serialize() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(totaloccur);
+		sb.append(SEP_DATASET);
+		sb.append(lookahead);
+		sb.append(SEP_STARTERS);
+		
+		for(Entry<String, MutableInteger> e : starters.entrySet()) {
+			sb.append(e.getKey());
+			sb.append(SEP_DATASET);
+			sb.append(e.getValue());
+			sb.append(SEP_DATASET);
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		sb.append(SEP_STARTERS);
+		
+		for(Entry<String, Result> e : pairset.entrySet()) {
+			sb.append(e.getKey());
+			sb.append(SEP_DATASET);
+			sb.append(e.getValue().serialize());
+			sb.append(SEP_DATASET);
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		
+		return sb.toString();
+	}
+	
+	public static Dataset unserialize(String s) {
+		// TODO: CLEAN UP OPTIMIZE CLEAN UP OPTIMIZE CLEAN UP OPTIMIZE CLEAN UP OPTIMIZE
+		Dataset ret = new Dataset();
+		
+		String[] p1 = s.split(SEP_STARTERS);
+		String[] metadata = p1[0].split(SEP_DATASET);
+		String[] starters = p1[1].split(SEP_DATASET);
+		String[] pairings = p1[2].split(SEP_DATASET);
+		
+		ret.totaloccur = Long.parseLong(metadata[0]);
+		ret.lookahead = Integer.parseInt(metadata[1]);
+		for(int i = 0; i < starters.length; i += 2) {
+			ret.starters.put(starters[i], new MutableInteger(Integer.parseInt(starters[i + 1])));
+		}
+		
+		for(int i = 0; i < pairings.length; i += 2) {
+			ret.pairset.put(pairings[i], Result.unserialize(pairings[i + 1]));
+		}
+		
+		
+		return ret;
+	}
 	
 	/**
 	 * Add data from file
